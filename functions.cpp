@@ -6,48 +6,147 @@
 /* Define our constructor. Pass Args to this to create an instance of Ising Model Class */
 /* Note: Its a constructor because there's no return type and method name 'Ising_Model' matches class name. */
 
-Ising_Model::Ising_Model(int n_rows, int n_cols, double T, int N_steps){
+Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
-	if(n_rows != n_cols){
-		throw std::runtime_error("SQUARE LATTICES ONLY - N_ROWS MUST MATCH N_COLS. CHECK VALUES IN MAIN.CPP");  // raise error if lattice isn't square
-	}else{
-		num_rows = n_rows;
-		num_cols = n_cols;
-	}
-
-	states = std::vector<int>(N_steps,0);
-	current_state = 0;
-	current_step = 0;
+	current_step = 0; // index for current step
+	states = std::vector<int>(N_steps,0); // initialize 1d array to hold binary states
 	spin_matrix = std::vector<std::vector<int>>(n_rows,std::vector<int>(n_cols,0)); // initialize 2d matrix with null spins
+	num_rows = n_rows;
+	num_cols = n_cols;
+	num_steps = N_steps;
+	temp = T;
 
-}
-
-/* Define function to overload the operator "<<" such that if the input 
-is std:ostream &out and &Ising_Model it prints the relevant info */
-std::ostream &operator<<(std::ostream &out, Ising_Model const &model){
-	
-	out << "n_rows\t" << "n_cols\t" << "current step\n" << "spin matrix\n";
-
-	for(int i=0;i<model.num_rows;i++){
-		for(int j=0;j<model.num_cols;j++){
-			if((j+1)%(model.num_cols) == 0){
-				out << model.spin_matrix[i][j] << "\n";
+	/* Initialize Spin Matrix with +1 and -1 randomly drawn */
+	std::random_device rd; // used to obtain seed for random number engine
+	std::mt19937 gen(rd()); // standard mersenne_twister_engine seeded with rd()
+	std::uniform_int_distribution<> uni_dis(0,1);
+	for(int i=0;i<num_rows;i++){
+		for(int j=0;j<num_cols;j++){
+			int rand_int = uni_dis(gen);         // draw random int either 0 or 1
+			if(rand_int == 1){
+				 spin_matrix[i][j]= 1;
 			}else{
-				out << model.spin_matrix[i][j] << "\t";	
+				spin_matrix[i][j] = -1;  // if rand_int was 0 change it to -1
 			}
 		}
 	}
-	out << std::endl;
-	// double phi,r,mu;
-	// phi = 0;
-	// for(int i=0;i<Haumea.mu_size;i++){
-	// 	mu = Haumea.mu_array[i];
-	// 	for(int k=0;k<Haumea.r_size;k++){
-	// 		r = Haumea.r_array[k];
-	// 		out << Haumea.iter << "\t" << phi << "\t" << mu << "\t" << r << "\t" << Haumea.density[0][i][k] << 
-	// 		"\t" << Haumea.g_potential[0][i][k] << std::endl;
-	// 	}
-	// }
 
+	states[current_step] = get_state(spin_matrix,num_rows,num_cols);
+
+}
+
+void Ising_Model::evolve(){
+	int energy = 0;  // integer to hold the local energy value
+	int row_index,col_index;
+	int left_nn,right_nn,down_nn,up_nn; // integers to hold the values of the nearest neighbors
+
+	std::random_device rd; // used to obtain seed for random number engine
+	std::mt19937 gen(rd()); // standard mersenne_twister_engine seeded with rd()
+	std::uniform_real_distribution<> real_dis(0,1); // real distribution to draw from (0 to 1)
+	std::uniform_int_distribution<> uni_dis(0,num_rows-1); // uniform distribution to draw from (0 to n_rows-1 inclusive)
+
+	//For each step get the spin matrix and convert to integer-named state
+	for(int i=1;i<num_steps;i++){
+		//time_series << i << "\n";
+		current_step = i;
+
+		/* Choose a node at random */
+		col_index = uni_dis(gen); // random int between 0 and n_cols-1
+		row_index = uni_dis(gen); // random int between 0 and n_rows-1
+
+
+		/* Get value of spin matrix at nearest neighbor sites using PBC*/
+		/* Note, indexing is mixed up (i.e. rows and columns are switched when printing) */
+		/* However, this does not adversely affect the results in any way */
+		if((row_index-1) >= 0){
+			left_nn = spin_matrix[row_index-1][col_index];
+		}else{
+			left_nn = spin_matrix[num_rows-1][col_index];
+		}
+		right_nn = spin_matrix[(row_index+1)%num_rows][col_index];
+		up_nn = spin_matrix[row_index][(col_index+1)%num_cols];
+		if((col_index -1) >= 0){
+			down_nn = spin_matrix[row_index][col_index-1];
+		}else{
+			down_nn = spin_matrix[row_index][num_cols-1];
+		}
+
+		/* Calculate Energy and Decide whether or not to Flip */
+		energy = -1*spin_matrix[row_index][col_index]*(left_nn+right_nn+down_nn+up_nn);
+		if(energy > 0){
+			spin_matrix[row_index][col_index] = -1*spin_matrix[row_index][col_index];
+		}else{
+			double r = real_dis(gen);
+			if(r <= std::exp(2.*double(energy)/temp)){
+				spin_matrix[row_index][col_index] = -1*spin_matrix[row_index][col_index];
+			}
+		}
+
+		// // output spin matrix
+		// for(int i=0;i<num_rows;i++){
+		// 	for(int j=0;j<num_rows;j++){
+		// 		if((j+1)%(num_rows) == 0){
+		// 			std::cout << spin_matrix[i][j] << "\n";
+		// 		}else{
+		// 			std::cout << spin_matrix[i][j] << "\t";	
+		// 		}
+		// 	}
+		// }
+
+
+		states[current_step] = get_state(spin_matrix,num_rows,num_cols);
+
+	}
+}
+
+
+/* Define function to overload the operator "<<" such that if the input 
+is the spin matrix it will print it as a table */
+std::ostream &operator<<(std::ostream &out, std::vector<std::vector<int>> spin_matrix){
+	
+	int n_rows = spin_matrix.size();
+	int n_cols = spin_matrix.size();
+	
+	out << "current_state\t" << get_state(spin_matrix,n_rows,n_cols) << "\n";
+	for(int i=0;i<n_rows;i++){
+		for(int j=0;j<n_rows;j++){
+			if((j+1)%(n_rows) == 0){
+				out << spin_matrix[i][j] << "\n";
+			}else{
+				out << spin_matrix[i][j] << "\t";	
+			}
+		}
+	}
+
+	out << std::endl;
 	return out;
 }
+
+/* Function to convert 2d matrix into unique integer identifier via binary conversion */
+int get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols){
+
+	int power = 0;  // each node represents a power of 2
+	int state = 0;  // this will be the identifier of our state
+
+	for(int i=0;i<num_rows;i++){
+		for(int j=0;j<num_cols;j++){
+			if(spin_matrix[i][j] == 1){
+				state = state + pow(2,power);
+			}
+			power = power + 1;
+		}
+	}
+
+	return state;
+}
+
+
+
+
+
+
+
+
+
+
+
