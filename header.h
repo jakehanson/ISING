@@ -17,7 +17,7 @@ struct Ising_Model
 	double temp; // temperature of the model
 
 	/* Define Methods */
-	void evolve();
+	void evolve(std::ostream &time_series);
 };
 
 

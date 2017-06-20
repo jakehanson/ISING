@@ -8,8 +8,9 @@ int main(int argc, char** argv)
 {
 	int n_rows = 3; // number of rows
 	int n_cols = 3; // number of columns
-	double T = 1.0e-10;  // Temperature of the ising model
-	long N_steps = 10000;
+	double T_c = 2.26918531421; // critical temp of ising model (coupling = +1, dimless temperature)
+	double T = 10*T_c;  // Temperature of the ising model (Note, critical temp in 2d is 2.26918531421)
+	long N_steps = 500;
 	
 	/* Make Sure Input Params are valid */
 	try{
@@ -26,8 +27,8 @@ int main(int argc, char** argv)
 
 	/* Store parameters in file */
 	std::ofstream params("params.txt");
-	params << "n_rows = " << n_rows << "\t" << "n_cols = " << n_cols << "\t" << "Temperature = " << T << "\t" 
-				<< "Total Steps = " << N_steps<< "\n";
+	params << "n_rows\tn_cols\tTemperature\tTrials\t\n";
+	params << n_rows << "\t" << n_cols << "\t" << T << "\t" << N_steps<< "\n";
 	params.close();
 
 
@@ -35,9 +36,9 @@ int main(int argc, char** argv)
 	Ising_Model model = Ising_Model(n_rows,n_cols,T,N_steps); // create Ising Model named 'model'
 	
 	/* Run Sim and Store Spin Matrices in File */
-	//std::ofstream time_series("time_series.txt");
-	model.evolve(); // evolve it through N_steps and
-	//time_series.close();
+	std::ofstream time_series("time_series.txt");
+	model.evolve(time_series); // evolve it through N_steps and
+	time_series.close();
 
 	/* Write time series of states to output file */
 	std::ofstream states("states.txt");

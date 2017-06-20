@@ -35,7 +35,7 @@ Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
 }
 
-void Ising_Model::evolve(){
+void Ising_Model::evolve(std::ostream &time_series){
 	int energy = 0;  // integer to hold the local energy value
 	int row_index,col_index;
 	int left_nn,right_nn,down_nn,up_nn; // integers to hold the values of the nearest neighbors
@@ -46,7 +46,7 @@ void Ising_Model::evolve(){
 	std::uniform_int_distribution<> uni_dis(0,num_rows-1); // uniform distribution to draw from (0 to n_rows-1 inclusive)
 
 	//For each step get the spin matrix and convert to integer-named state
-	for(int i=1;i<num_steps;i++){
+	for(int i=1;i<=num_steps;i++){
 		//time_series << i << "\n";
 		current_step = i;
 
@@ -82,16 +82,16 @@ void Ising_Model::evolve(){
 			}
 		}
 
-		// // output spin matrix
-		// for(int i=0;i<num_rows;i++){
-		// 	for(int j=0;j<num_rows;j++){
-		// 		if((j+1)%(num_rows) == 0){
-		// 			std::cout << spin_matrix[i][j] << "\n";
-		// 		}else{
-		// 			std::cout << spin_matrix[i][j] << "\t";	
-		// 		}
-		// 	}
-		// }
+		// save spin matrix in file
+		for(int i=0;i<num_rows;i++){
+			for(int j=0;j<num_rows;j++){
+				if(j == num_rows-1 and i == num_rows-1){
+					time_series << spin_matrix[i][j] << "\n"; // end of line
+				}else{
+					time_series << spin_matrix[i][j] << "\t"; // seperate entries by tab
+				}
+			}
+		}
 
 
 		states[current_step] = get_state(spin_matrix,num_rows,num_cols);
