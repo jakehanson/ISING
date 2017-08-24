@@ -1,7 +1,7 @@
 ![alt text](https://github.com/jakehanson/ISING/blob/dev/Ising_Freeze.gif)
 
 ## Overview
-This is a Ising Model with a Metpropolis update algorithm. To run the code, you first specify the size of the square lattice (up to 8x8) and the temperature. The model then randomly initializes and evolves the model through a specified number of steps. The lattice size, temeperature, and number of steps can all be modified in **main.cpp**.
+This is an Ising Model with a Metpropolis update algorithm. To run the code, you first specify the size of the square lattice (up to 8x8) and the temperature. The model then randomly initializes and evolves the model through a specified number of steps. The lattice size, temeperature, and number of steps can all be modified in **main.cpp**.
 
 There are three primary outputs from the code:
 * **params.txt** - The input parameters from main.cpp are output to a file called params.txt.
