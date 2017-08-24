@@ -18,3 +18,5 @@ g++ -std=c++11 main.cpp functions.cpp -o run_sim.exe
 Once you have the executable, it can be run from the command line:
 
 ./run_sim.exe
+
+**NOTE: EVERY TIME YOU CHANGE A PARAMETER IN MAIN.CPP YOU MUST RECOMPILE THE CODE!!**
