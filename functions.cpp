@@ -1,5 +1,4 @@
 #include "header.h"
-#include <stdio.h>
 #include <cmath>
 #include <stdexcept>
 
@@ -9,7 +8,7 @@
 Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
 	current_step = 0; // index for current step
-	states = std::vector<int>(N_steps,0); // initialize 1d array to hold binary states
+	states = std::vector<unsigned long long>(N_steps,0); // initialize 1d array to hold sequence of integer states
 	spin_matrix = std::vector<std::vector<int>>(n_rows,std::vector<int>(n_cols,0)); // initialize 2d matrix with null spins
 	num_rows = n_rows;
 	num_cols = n_cols;
@@ -123,17 +122,18 @@ std::ostream &operator<<(std::ostream &out, std::vector<std::vector<int>> spin_m
 }
 
 /* Function to convert 2d matrix into unique integer identifier via binary conversion */
-int get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols){
+unsigned long long get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols){
 
-	int power = 0;  // each node represents a power of 2
-	int state = 0;  // this will be the identifier of our state
+	double power = 0.;  // each node represents a power of 2
+	unsigned long long state = 0;  // this will be the identifier of our state
 
 	for(int i=0;i<num_rows;i++){
 		for(int j=0;j<num_cols;j++){
 			if(spin_matrix[i][j] == 1){
-				state = state + pow(2,power);
+				state = state + std::pow(2.,power);
+				//std::cout << "state: " << state << "\t";
 			}
-			power = power + 1;
+			power = power + 1.;
 		}
 	}
 
