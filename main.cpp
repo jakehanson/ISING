@@ -11,6 +11,7 @@ int main(int argc, char** argv)
 	double T_c = 2.26918531421; // critical temp of ising model (coupling = +1, dimless temperature)
 	double T = 10*T_c;  // Temperature of the ising model (Note, critical temp in 2d is 2.26918531421)
 	long N_steps = 1000;  // Number of steps to take
+	bool output_spins = false; // flag to output spin matrix at each time step
 
 	std::vector<std::vector<double>> x;	// 2d array for the current spin matrix
 
@@ -31,7 +32,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	std::cout << "Starting..."
+	std::cout << "Starting...\n";
 	
 	/* Store parameters in file */
 	std::ofstream params("params.txt");
@@ -44,9 +45,13 @@ int main(int argc, char** argv)
 	Ising_Model model = Ising_Model(n_rows,n_cols,T,N_steps); // create Ising Model named 'model'
 	
 	/* Run Sim and Store Spin Matrices in File */
-	std::ofstream time_series("time_series.txt");
-	model.evolve(time_series); // evolve it through N_steps
-	time_series.close();
+	if(output_spins == true){
+		std::ofstream time_series("time_series.txt");
+		model.evolve(time_series); // evolve it through N_steps
+		time_series.close();		
+	}else{
+		model.evolve();
+	}
 
 	/* Write time series of states to output file */
 	std::ofstream states("states.txt");
@@ -54,13 +59,6 @@ int main(int argc, char** argv)
 		states << model.states[i] << std::endl;
 	}
 	states.close();
-
-	for(int i=0;i<n_rows;i++){
-		for(int j=0;j<n_rows;j++){
-			std::cout << model.spin_matrix[i][j] << " ";
-		}
-	}
-	std::cout << std::endl;
 
 	std::cout << "Done.\n"; // End Main
 

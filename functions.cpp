@@ -34,6 +34,7 @@ Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
 }
 
+// This method evolves and writes spins to file
 void Ising_Model::evolve(std::ostream &time_series){
 	int energy = 0;  // integer to hold the local energy value
 	int row_index,col_index;
@@ -90,8 +91,60 @@ void Ising_Model::evolve(std::ostream &time_series){
 					time_series << spin_matrix[i][j] << "\t"; // seperate entries by tab
 				}
 			}
+		}	
+
+		states[current_step] = get_state(spin_matrix,num_rows,num_cols);
+
+	}
+}
+
+// This method evolves but does not write spins to file
+void Ising_Model::evolve(void){
+	int energy = 0;  // integer to hold the local energy value
+	int row_index,col_index;
+	int left_nn,right_nn,down_nn,up_nn; // integers to hold the values of the nearest neighbors
+
+	std::random_device rd; // used to obtain seed for random number engine
+	std::mt19937 gen(rd()); // standard mersenne_twister_engine seeded with rd()
+	std::uniform_real_distribution<> real_dis(0,1); // real distribution to draw from (0 to 1)
+	std::uniform_int_distribution<> uni_dis(0,num_rows-1); // uniform distribution to draw from (0 to n_rows-1 inclusive)
+
+	//For each step get the spin matrix and convert to integer-named state
+	for(int i=1;i<=num_steps;i++){
+		//time_series << i << "\n";
+		current_step = i;
+
+		/* Choose a node at random */
+		col_index = uni_dis(gen); // random int between 0 and n_cols-1
+		row_index = uni_dis(gen); // random int between 0 and n_rows-1
+
+
+		/* Get value of spin matrix at nearest neighbor sites using PBC*/
+		/* Note, indexing is mixed up (i.e. rows and columns are switched when printing) */
+		/* However, this does not adversely affect the results in any way */
+		if((row_index-1) >= 0){
+			left_nn = spin_matrix[row_index-1][col_index];
+		}else{
+			left_nn = spin_matrix[num_rows-1][col_index];
+		}
+		right_nn = spin_matrix[(row_index+1)%num_rows][col_index];
+		up_nn = spin_matrix[row_index][(col_index+1)%num_cols];
+		if((col_index -1) >= 0){
+			down_nn = spin_matrix[row_index][col_index-1];
+		}else{
+			down_nn = spin_matrix[row_index][num_cols-1];
 		}
 
+		/* Calculate Energy and Decide whether or not to Flip */
+		energy = -1*spin_matrix[row_index][col_index]*(left_nn+right_nn+down_nn+up_nn);
+		if(energy > 0){
+			spin_matrix[row_index][col_index] = -1*spin_matrix[row_index][col_index];
+		}else{
+			double r = real_dis(gen);
+			if(r <= std::exp(2.*double(energy)/temp)){
+				spin_matrix[row_index][col_index] = -1*spin_matrix[row_index][col_index];
+			}
+		}
 
 		states[current_step] = get_state(spin_matrix,num_rows,num_cols);
 
