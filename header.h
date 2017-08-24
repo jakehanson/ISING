@@ -19,6 +19,7 @@ struct Ising_Model
 
 	/* Define Methods */
 	void evolve(std::ostream &time_series);
+	void evolve(void);
 };
 
 
@@ -27,3 +28,12 @@ std::ostream &operator<<(std::ostream &out, std::vector<std::vector<int>> spin_m
 
 /* Other Functions */
 unsigned long long get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols);
+
+//HEADER
+// std::vector<std::vector<double>> get_TPM(std::vector<unsigned long long> states); // relevant only for EI.cpp 
+
+// //MAIN:
+// std::cout << "GET EI:" << std::endl;
+
+// std::cout << "FIRST STATE: " << model.states[0] << std::endl;
+// x = get_TPM(model.states);
