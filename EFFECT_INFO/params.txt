@@ -1,2 +1,0 @@
-n_rows	n_cols	Temperature	Steps	
-3	3	22.6919	100000
