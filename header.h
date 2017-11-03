@@ -3,6 +3,8 @@
 #include <iostream>
 #include <random>
 #include <stdio.h>
+#include <map>
+
 
 /* Structure to hold the current properties of the Ising Model */
 struct Ising_Model
@@ -22,18 +24,13 @@ struct Ising_Model
 	void evolve(void);
 };
 
+std::tuple<int, int, int, int> get_nn(int index,int n_rows,int n_cols);
 
 /* Overload '<<' to easily write spin_matrix data to file */
 std::ostream &operator<<(std::ostream &out, std::vector<std::vector<int>> spin_matrix);
 
-/* Other Functions */
+/* Function to convert spin state to integer using binary representaion */
 unsigned long long get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols);
 
-//HEADER
-// std::vector<std::vector<double>> get_TPM(std::vector<unsigned long long> states); // relevant only for EI.cpp 
-
-// //MAIN:
-// std::cout << "GET EI:" << std::endl;
-
-// std::cout << "FIRST STATE: " << model.states[0] << std::endl;
-// x = get_TPM(model.states);
+/* Function to create a map for compressing the large state space into as small of a state space as possible */
+std::map<unsigned long long,unsigned long long> update_map(std::vector<unsigned long long> states,std::map<unsigned long long,unsigned long long> compression_map);

@@ -4,7 +4,6 @@
 
 /* Define our constructor. Pass Args to this to create an instance of Ising Model Class */
 /* Note: Its a constructor because there's no return type and method name 'Ising_Model' matches class name. */
-
 Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
 	current_step = 0; // index for current step
@@ -34,6 +33,7 @@ Ising_Model::Ising_Model(int n_rows, int n_cols, double T, long N_steps){
 
 }
 
+
 // This method evolves and writes spins to file
 void Ising_Model::evolve(std::ostream &time_series){
 	int energy = 0;  // integer to hold the local energy value
@@ -45,8 +45,8 @@ void Ising_Model::evolve(std::ostream &time_series){
 	std::uniform_real_distribution<> real_dis(0,1); // real distribution to draw from (0 to 1)
 	std::uniform_int_distribution<> uni_dis(0,num_rows-1); // uniform distribution to draw from (0 to n_rows-1 inclusive)
 
-	//For each step get the spin matrix and convert to integer-named state
-	for(int i=1;i<=num_steps;i++){
+	//For each step get the spin matrix and convert binary string to integer representation 
+	for(int i=1;i<num_steps;i++){
 		//time_series << i << "\n";
 		current_step = i;
 
@@ -54,10 +54,9 @@ void Ising_Model::evolve(std::ostream &time_series){
 		col_index = uni_dis(gen); // random int between 0 and n_cols-1
 		row_index = uni_dis(gen); // random int between 0 and n_rows-1
 
-
 		/* Get value of spin matrix at nearest neighbor sites using PBC*/
 		/* Note, indexing is mixed up (i.e. rows and columns are switched when printing) */
-		/* However, this does not adversely affect the results in any way */
+		/* However, this just transposes the visualization */
 		if((row_index-1) >= 0){
 			left_nn = spin_matrix[row_index-1][col_index];
 		}else{
@@ -71,7 +70,7 @@ void Ising_Model::evolve(std::ostream &time_series){
 			down_nn = spin_matrix[row_index][num_cols-1];
 		}
 
-		/* Calculate Energy and Decide whether or not to Flip */
+		/* Calculate energy and decide whether or not to flip (Metropolis Algorithm) */
 		energy = -1*spin_matrix[row_index][col_index]*(left_nn+right_nn+down_nn+up_nn);
 		if(energy > 0){
 			spin_matrix[row_index][col_index] = -1*spin_matrix[row_index][col_index];
@@ -98,6 +97,7 @@ void Ising_Model::evolve(std::ostream &time_series){
 	}
 }
 
+
 // This method evolves but does not write spins to file
 void Ising_Model::evolve(void){
 	int energy = 0;  // integer to hold the local energy value
@@ -110,7 +110,7 @@ void Ising_Model::evolve(void){
 	std::uniform_int_distribution<> uni_dis(0,num_rows-1); // uniform distribution to draw from (0 to n_rows-1 inclusive)
 
 	//For each step get the spin matrix and convert to integer-named state
-	for(int i=1;i<=num_steps;i++){
+	for(int i=1;i<num_steps;i++){
 		//time_series << i << "\n";
 		current_step = i;
 
@@ -118,10 +118,9 @@ void Ising_Model::evolve(void){
 		col_index = uni_dis(gen); // random int between 0 and n_cols-1
 		row_index = uni_dis(gen); // random int between 0 and n_rows-1
 
-
 		/* Get value of spin matrix at nearest neighbor sites using PBC*/
 		/* Note, indexing is mixed up (i.e. rows and columns are switched when printing) */
-		/* However, this does not adversely affect the results in any way */
+		/* However, this just transposes the visualization */
 		if((row_index-1) >= 0){
 			left_nn = spin_matrix[row_index-1][col_index];
 		}else{
@@ -153,28 +152,27 @@ void Ising_Model::evolve(void){
 
 
 /* Define function to overload the operator "<<" such that if the input 
-is the spin matrix it will print it as a table */
+is the spin matrix it will print it as a single row */
 std::ostream &operator<<(std::ostream &out, std::vector<std::vector<int>> spin_matrix){
 	
 	int n_rows = spin_matrix.size();
 	int n_cols = spin_matrix.size();
-	
-	out << "current_state\t" << get_state(spin_matrix,n_rows,n_cols) << "\n";
+
+	// save spin matrix in file
 	for(int i=0;i<n_rows;i++){
 		for(int j=0;j<n_rows;j++){
-			if((j+1)%(n_rows) == 0){
-				out << spin_matrix[i][j] << "\n";
+			if(j == n_rows-1 and i == n_rows-1){
+				out << spin_matrix[i][j] << "\n"; // end of line
 			}else{
-				out << spin_matrix[i][j] << "\t";	
+				out << spin_matrix[i][j] << "\t"; // seperate entries by tab
 			}
 		}
-	}
-
-	out << std::endl;
+	}	
 	return out;
 }
 
-/* Function to convert 2d matrix into unique integer identifier via binary conversion */
+
+/* Function to convert 2d matrix into unique integer via binary conversion */
 unsigned long long get_state(std::vector<std::vector<int>> spin_matrix, int num_rows, int num_cols){
 
 	double power = 0.;  // each node represents a power of 2
@@ -194,12 +192,18 @@ unsigned long long get_state(std::vector<std::vector<int>> spin_matrix, int num_
 }
 
 
+/* Function to map unique states onto as small of an integer set as possible */
+std::map<unsigned long long,unsigned long long> update_map(std::vector<unsigned long long> states,std::map<unsigned long long,unsigned long long> compression_map){
+	
+	unsigned long long current_state;
 
-
-
-
-
-
-
-
+	for(int i=0;i<states.size();i++){
+		current_state = states[i];
+		//If current state doesn't exist assign it the lowest value possible
+		if(compression_map.find(current_state) == compression_map.end()){
+		  compression_map[current_state] = compression_map.size();
+		}
+	}
+	return compression_map;
+}
 
